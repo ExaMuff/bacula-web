@@ -136,20 +136,26 @@ class Bweb
         $volumes      = '';
         $volumes_list = array();
         $query        = "";
+//MKO Aggiunto per calcolo TTL
+        $time         = time();
+        $dtF          = new DateTime("@0");
+//END MKO
                 
         foreach (Pools_Model::getPools($this->db_link) as $pool) {
             switch($this->db_driver)
             {
                 case 'sqlite':
                 case 'mysql':
-                    $query  = "SELECT Media.volumename, Media.volbytes, Media.volstatus, Media.mediatype, Media.lastwritten, Media.volretention
+//MKO Aggiunto per firstwritten per calcolo TTL
+                    $query  = "SELECT Media.voluseduration, Media.inchanger, Media.slot, Media.firstwritten, Media.volumename, Media.volbytes, Media.volstatus, Media.mediatype, Media.lastwritten, Media.volretention
 									FROM Media LEFT JOIN Pool ON Media.poolid = Pool.poolid
 									WHERE Media.poolid = '". $pool['poolid'] . "' ORDER BY Media.volumename";
                     break;
                 case 'pgsql':
-                    $query  = "SELECT media.volumename, media.volbytes, media.volstatus, media.mediatype, media.lastwritten, media.volretention
+                    $query  = "SELECT media.voluseduration, media.inchanger, media.slot, media.firstwritten, media.volumename, media.volbytes, media.volstatus, media.mediatype, media.lastwritten, media.volretention
 									FROM media LEFT JOIN pool ON media.poolid = pool.poolid
 									WHERE media.poolid = '". $pool['poolid'] . "' ORDER BY media.volumename";
+//END MKO
                     break;
             } // end switch
                     
@@ -168,7 +174,20 @@ class Bweb
                     } else {
                         $volume['expire'] = 'N/A';
                     }
-                            
+                  //MKO Calcolo Append Life
+                    $timediff = $time - strtotime($volume['firstwritten']);
+                    if ($volume['volstatus'] == 'Append') {
+                        $remaining = $volume['voluseduration'] - $timediff;
+                        $dtT = new DateTime("@$remaining");
+                        $volume['volstatus'] = $volume['volstatus'] . ' (' . $dtF->diff($dtT)->format('%ad %Hh %im %ss') . ')';
+                    }
+                 //MKO Calcolo TTL
+                    $ttl = $volume['volretention'] - $timediff;
+                    $dtT = new DateTime("@$ttl");
+                    ($ttl>0) ? $volume['ttl'] = $dtF->diff($dtT)->format('%ad %Hh %im %ss') : $volume['ttl'] = 'Expired';
+                 //MKO In Changer
+                    ($volume['inchanger']) ? $volume['changer'] = 'Slot: ' . $volume['slot'] : $volume['changer'] = 'No';
+
                  // Media used bytes in a human format
                     $volume['volbytes'] = CUtils::Get_Human_Size($volume['volbytes']);
                 } else {
@@ -176,7 +195,7 @@ class Bweb
                     $volume['expire']      = "N/A";
                     $volume['volbytes']       = "0 KB";
                 }
-                        
+                $volume['volretention'] = $volume['volretention'] / 60 / 60 / 24 . 'd'; 
              // Add the media in pool array
                 array_push($volumes_list[ $pool['name']], $volume);
             } // end foreach volumes

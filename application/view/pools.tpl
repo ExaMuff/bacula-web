@@ -1,5 +1,4 @@
 {include file=header.tpl}
-
 <div class="container">
 
 	<h3>{$page_name}</h3>
@@ -13,6 +12,9 @@
 			<th class="text-center">{t}Media Type{/t}</th>
 			<th class="text-center"title="{t}Estimated expiration date{/t}">{t}Expire{/t}</th>
 			<th class="text-center">{t}Last written{/t}</th>
+			<th class="text-center">{t}Retention{/t}</th>
+			<th class="text-center">{t}TTL{/t}</th>
+			<th class="text-center">{t}Changer{/t}</th>
 			<th class="text-center">{t}Status{/t}</th>
 		</tr>
 		{foreach from=$pool item=volume}
@@ -22,6 +24,9 @@
 			<td>{$volume.mediatype}</td>
 			<td>{$volume.expire}</td>
 			<td>{$volume.lastwritten}</td>
+			<td>{$volume.volretention}</td>
+			<td>{$volume.ttl}</td>
+			<td>{$volume.changer}</td>
 			<td>{$volume.volstatus}</td>
 		</tr>
 		{foreachelse}
