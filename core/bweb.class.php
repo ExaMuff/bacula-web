@@ -178,6 +178,9 @@ class Bweb
                     $timediff = $time - strtotime($volume['firstwritten']);
                     if ($volume['volstatus'] == 'Append') {
                         $remaining = $volume['voluseduration'] - $timediff;
+                        if ($remaining < 0) {
+                            $remaining = 0;
+                        }
                         $dtT = new DateTime("@$remaining");
                         $volume['volstatus'] = $volume['volstatus'] . ' (' . $dtF->diff($dtT)->format('%ad %Hh %im %ss') . ')';
                     }
